@@ -14,7 +14,7 @@ export function bearingDeg(a, b) {
   return (toDeg(θ) + 360) % 360;
 }
 
-const norm360 = d => ((d % 360) + 360) % 360;
+export const norm360 = d => ((d % 360) + 360) % 360;
 const degToRad = d => d * Math.PI / 180;
 const toMs = t => (t < 1e12 ? t * 1000 : t);
 const toNum = v => {

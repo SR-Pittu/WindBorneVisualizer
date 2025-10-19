@@ -1,4 +1,4 @@
-// Summary.jsx
+
 import ChartTitle from "../components/ChartTitle";
 
 const toNum = (v) => {
@@ -29,14 +29,10 @@ export default function Summary({ rows = [] }) {
 
   const hasWind = (r) => toNum(r.windKmh) != null;
   const hasDelta = (r) => toNum(r.tailHeadDelta) != null;
-  // console.log("Valid deltas:", rows.filter(hasDelta).map(r => r.tailHeadDelta));
   const numWithWind = rows.filter(hasWind).length;
-
   const avgSpeed = avgOf(rows, "speedKmh");
   const avgWind = avgOf(rows, "windKmh", hasWind);
   const avgDelta = avgOf(rows, "tailHeadDelta", hasDelta);
-
-  // Percentage of rows with weather (show em dash if no rows)
   const withWxPct =
     n > 0 ? `${Math.round((numWithWind / n) * 100)}%` : "—";
 

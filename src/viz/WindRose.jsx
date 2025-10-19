@@ -10,7 +10,6 @@ import {
 } from "recharts";
 import ChartTitle from "../components/ChartTitle";
 
-/** Normalize an angle to [0, 360). */
 function norm360(a) {
   const num = Number(a);
   if (!Number.isFinite(num)) return NaN;
@@ -18,14 +17,12 @@ function norm360(a) {
   return x < 0 ? x + 360 : x;
 }
 
-/** 12 sectors (30° each). 0 => [0,30), 1 => [30,60), ... 11 => [330,360) */
 function sectorIdx(deg) {
   const d = norm360(deg);
   if (!Number.isFinite(d)) return -1;
   return Math.floor(d / 30) % 12;
 }
 
-/** Build sectors for "wind" (windFromDeg) or "heading" (headingDeg). */
 function buildSectors(rows = [], { mode = "wind" } = {}) {
   const sectors = Array.from({ length: 12 }, (_, i) => ({
     dir: `${i * 30}°`,
@@ -37,7 +34,7 @@ function buildSectors(rows = [], { mode = "wind" } = {}) {
 
   for (const r of rows) {
     if (!r) continue;
-    const angle = r[angleKey];                      // safe access (no optional chaining with [])
+    const angle = r[angleKey];                      
     const idx = sectorIdx(angle);
     if (idx < 0) continue;
 
@@ -46,8 +43,6 @@ function buildSectors(rows = [], { mode = "wind" } = {}) {
     const v = Number(r.speedKmh);
     if (Number.isFinite(v)) sectors[idx].sumSpeed += v;
   }
-
-  // Compute avg speed per sector
   return sectors.map(s => ({
     dir: s.dir,
     n: s.n,
@@ -57,19 +52,17 @@ function buildSectors(rows = [], { mode = "wind" } = {}) {
 
 export default function WindRose({
   rows = [],
-  mode = "wind",   // "wind" (windFromDeg) or "heading" (balloon heading)
-  metric = "avg"   // "avg" (speed) or "n" (count)
+  mode = "wind",   
+  metric = "avg"   
 }) {
   const sectors = buildSectors(rows, { mode });
   const totalCount = sectors.reduce((a, b) => a + b.n, 0);
   const allAvgZero = sectors.every(s => s.avg === 0);
 
-  // If we asked for avg but it's all zeros (no speed values), fall back to count
   const useMetric = metric === "avg" && allAvgZero ? "n" : metric;
   const dataKey = useMetric === "avg" ? "avg" : "n";
   const seriesLabel = useMetric === "avg" ? "Avg speed (km/h)" : "Sample count";
 
-  // Empty state → no sectors populated
   if (totalCount === 0) {
     return (
       <div className="panel">

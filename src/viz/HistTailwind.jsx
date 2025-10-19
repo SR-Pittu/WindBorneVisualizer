@@ -6,7 +6,6 @@ const bins = [
 ];
 
 export default function HistTailwind({ rows }) {
-  // console.log("HistTailwind rows:", rows);
   const hs = rows.map(r => r.tailHeadDelta).filter(Number.isFinite);
   const counts = bins.map(([a, b]) => ({
     bucket: `${a}°–${b}°`,

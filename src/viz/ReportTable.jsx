@@ -3,7 +3,7 @@ import ExportButton from "./ExportButton.jsx";
 import ChartTitle from "../components/ChartTitle";
 
 export default function ReportTable({ rows }) {
-  const [showMessage, setShowMessage] = useState(false); // <-- ADD THIS LINE
+  const [showMessage, setShowMessage] = useState(false);
 
   if (!rows?.length) {
     return (

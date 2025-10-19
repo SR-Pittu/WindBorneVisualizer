@@ -1,12 +1,15 @@
 import axios from "axios";
 
-// ---------- config ----------
-const DEV = "/wb";       // vite proxy (dev)
-const PROD = "/api/wb";  // your serverless rewrite (prod)
+function demoFallback() {
+  return { rows: [] }; // or return mock data as needed
+}
+
+const DEV = "/wb";       
+const PROD = "/api/wb";
 const isLocal = () => location.hostname === "localhost" || location.hostname === "127.0.0.1";
 const BASE = isLocal() ? DEV : PROD;
 
-// meters
+
 const EARTH_R = 6371e3;
 const toRad = d => d * Math.PI / 180;
 const haversine = (a, b) => {
@@ -14,7 +17,7 @@ const haversine = (a, b) => {
   const dLon = toRad(b.lon - a.lon);
   const sLat1 = toRad(a.lat), sLat2 = toRad(b.lat);
   const h = Math.sin(dLat/2)**2 + Math.cos(sLat1)*Math.cos(sLat2)*Math.sin(dLon/2)**2;
-  return 2 * EARTH_R * Math.asin(Math.sqrt(h)); // meters
+  return 2 * EARTH_R * Math.asin(Math.sqrt(h));
 };
 
 // accept arrays or objects
@@ -39,7 +42,7 @@ async function fetchHour(i) {
 
 // Greedy nearest-neighbor assignment with a distance cap.
 // If a point is farther than MAX_LINK from every existing track, start a new track.
-const MAX_LINK = 1200e3; // 1200 km; tweak if your data moves faster/slower
+const MAX_LINK = 1200e3; 
 
 export async function fetchConstellation24h() {
   const hours = await Promise.all(Array.from({ length: 24 }, (_, i) => fetchHour(i)));

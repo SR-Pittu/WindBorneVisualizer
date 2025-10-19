@@ -1,6 +1,5 @@
 // crude isothermal barometric model, good enough for bucketing
 export function altKmToHpa(altKm) {
-  // scale height ~7.0 km; p = p0 * e^(-z/H)
   const H = 7.0;
   return 1013.25 * Math.exp(-altKm / H);
 }

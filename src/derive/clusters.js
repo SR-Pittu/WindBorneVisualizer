@@ -1,6 +1,3 @@
-// src/derive/cluster.js
-
-// --- tiny helpers ------------------------------------------------------------
 const centroid3 = (pts) => {
   if (!pts.length) return { lat: 0, lon: 0, alt: 0 };
   let lat = 0, lon = 0, alt = 0;
@@ -13,8 +10,6 @@ const sqDist = (a, b) =>
   (a.lat - b.lat) * (a.lat - b.lat) +
   (a.lon - b.lon) * (a.lon - b.lon) +
   (a.alt - b.alt) * (a.alt - b.alt);
-
-// --- k-means in 3D (lat, lon, alt) ------------------------------------------
 /**
  * @param {Array<{lat:number, lon:number, alt:number}>} points
  * @param {number} k
@@ -57,14 +52,12 @@ export function kMeans(points, k, iters = 10) {
       if (buckets[c].length) {
         centroids[c] = centroid3(buckets[c]);
       }
-      // if a bucket is empty, keep the old centroid to avoid NaNs
+
     }
   }
 
   return { labels, centroids };
 }
-
-// --- public API --------------------------------------------------------------
 /**
  * Build clusters from WindBorne 24h tracks, using **latest** point per balloon.
  * @param {{[id:string]: Array<{t:string|number, lat:number, lon:number, alt:number}>}} byId

@@ -69,7 +69,7 @@ export default function useDashboardData(k = 100) {
       let avgTailDelta = null;
       const wFrom = toNum(wx.windFromDeg);
       if (members.length && wFrom != null) {
-        const wTo = norm360(wFrom + 180); // FROM -> TO
+        const wTo = norm360(wFrom + 180); 
         const deltas = members
           .map(id => headingMap[id])
           .filter(Number.isFinite)
@@ -96,8 +96,8 @@ export default function useDashboardData(k = 100) {
         tempGroundC: toNum(wx.tempGroundC),
         tempAltC: toNum(wx.tempAltC),
 
-        speedKmh: avgSpeedKmh,           // km/h
-        tailHeadDelta: avgTailDelta,     // degrees (0=tail, 180=head)
+        speedKmh: avgSpeedKmh,          
+        tailHeadDelta: avgTailDelta,     
       };
     });
   }, [clusters, wxByCluster, derived]);

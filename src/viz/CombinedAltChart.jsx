@@ -16,8 +16,6 @@ const PALETTE = [
   "#2563eb", "#059669", "#dc2626", "#d97706", "#9333ea",
   "#0ea5e9", "#16a34a", "#f43f5e", "#f59e0b", "#22c55e",
 ];
-
-// --- helpers -----------------------------------------------------------------
 const minuteKey = (t) => {
   const d = t instanceof Date ? new Date(t) : new Date(t);
   d.setSeconds(0, 0);
@@ -25,13 +23,11 @@ const minuteKey = (t) => {
 };
 const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
 
-// simple k-means on 3D [lat, lon, alt]
 function kMeans(points, k, iters = 12) {
   const n = points.length;
   if (!n) return { labels: [], centroids: [] };
   k = Math.max(1, Math.min(k, n));
 
-  // deterministic init: evenly spaced seeds
   const step = n / k;
   let centroids = Array.from({ length: k }, (_, i) => points[Math.floor(i * step)]);
 
@@ -73,18 +69,6 @@ function kMeans(points, k, iters = 12) {
   }
   return { labels, centroids };
 }
-
-/**
- * Chart-only clustering:
- * - Clusters ALL balloons (from `tracks`) into up to `k` groups using their latest (lat,lon,alt)
- * - Plots mean altitude vs time per cluster
- *
- * Props:
- *   - tracks: { [id]: [{t,lat,lon,alt}, ...] }
- *   - k?: number (default 10)
- *   - maxIds?: safety cap on balloons used (default 2000)
- *   - height?: number (default 360)
- */
 export default function CombinedAltChart({
   tracks,
   k = 10,
@@ -124,7 +108,7 @@ export default function CombinedAltChart({
     labels.forEach((c, i) => { members[c].push(idList[i]); });
 
     // 5) Precompute per-id minute-binned altitude series and a unified time axis
-    const perIdSeries = new Map(); // id -> Map(timeKey -> alt)
+    const perIdSeries = new Map(); 
     const allTimes = new Set();
     for (const id of idList) {
       const segs = tracks[id] || [];
@@ -144,7 +128,7 @@ export default function CombinedAltChart({
     // 6) Aggregate mean altitude per cluster at each time
     const seriesKeys = members.map((_, i) => `C${i + 1}`);
     const data = timeKeys.map((tk) => {
-      const timeTs = new Date(tk).getTime(); // numeric timestamp for Recharts
+      const timeTs = new Date(tk).getTime(); 
       const row = { timeTs };
       members.forEach((idsInCluster, ci) => {
         const vals = [];

@@ -30,10 +30,10 @@ export default function TempComparison({ rows }) {
           data={data}
           margin={{ top: 12, right: 24, bottom: 24, left: 12 }}
         >
-          <CartesianGrid strokeDasharray="3 6" stroke="#374151" />  {/* dim grid for dark bg */}
+          <CartesianGrid strokeDasharray="3 6" stroke="#374151" />  
           <XAxis
             dataKey="idx"
-            tick={{ fill: "#d1d5db", fontSize: 11 }}     // light gray ticks
+            tick={{ fill: "#d1d5db", fontSize: 11 }}    
             interval={tickEvery - 1}
             tickMargin={2}
             label={{
@@ -73,13 +73,12 @@ export default function TempComparison({ rows }) {
             wrapperStyle={{ color: "#e5e7eb", paddingTop: 8 }}
           />
 
-          {/* 🔥 vivid orange & cool blue for contrast */}
           <Line
             type="monotone"
             dataKey="ground"
             name="Ground Temp"
             dot={false}
-            stroke="#f97316"       // vivid warm orange
+            stroke="#f97316"       
             strokeWidth={3}
             activeDot={{ r: 6, fill: "#fb923c" }}
           />
@@ -88,7 +87,7 @@ export default function TempComparison({ rows }) {
             dataKey="alt"
             name="Altitude Temp"
             dot={false}
-            stroke="#3b82f6"       // bright sky-blue
+            stroke="#3b82f6"       
             strokeWidth={3}
             activeDot={{ r: 6, fill: "#60a5fa" }}
           />

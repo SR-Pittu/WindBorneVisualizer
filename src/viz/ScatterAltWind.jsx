@@ -28,15 +28,13 @@ export default function ScatterAltWind({ rows = [] }) {
             domain={['dataMin - 1', 'dataMax + 1']}
             tickMargin={6}
           />
-
-          {/* More ticks on Y axis */}
           <YAxis
             type="number"
             dataKey="y"
             name="Wind @ alt"
             unit=" km/h"
             domain={['dataMin - 5', 'dataMax + 5']}
-            tickCount={7}            // ← add a few more ticks
+            tickCount={8}       
             allowDecimals={true}
             tickMargin={6}
           />
@@ -52,8 +50,6 @@ export default function ScatterAltWind({ rows = [] }) {
               return [v, n];
             }}
           />
-
-          {/* Legend at the bottom as requested */}
           <Legend
             verticalAlign="bottom"
             align="right"
