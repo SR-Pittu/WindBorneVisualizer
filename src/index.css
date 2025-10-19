@@ -1,0 +1,215 @@
+:root { color-scheme: light; }
+
+/* ===== Base ===== */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
+    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  background: #176b8e;
+  color: white;
+}
+
+/* ===== Container (slightly tighter sides) ===== */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 10px;
+}
+@media (min-width: 1440px) { .container { max-width: 90%; } }
+@media (max-width: 1280px) { .container { max-width: 1000px; padding: 14px 18px; } }
+@media (max-width: 960px)  { .container { max-width: 100%;  padding: 12px 14px; } }
+
+header h1 { margin: 0; font-size: 28px; letter-spacing: .2px; }
+.muted { color: white; font-size: 14px; }
+
+/* ===== Panels / layout ===== */
+.panel {
+  background: #fff;
+  border: 1px solid #e6edf3;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 10px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  overflow: visible;
+}
+
+.grid1 { display: flex; flex-direction: column; gap: 20px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* ===== Chart headings with tooltip ===== */
+.chart-title {
+  display: inline-flex; align-items: center; gap: .5rem;
+  position: relative; overflow: visible;
+  color: black;
+  font-weight: 700;
+  font-size: 1.1rem; margin-bottom: 8px;
+}
+.chart-title__text { margin: 0; line-height: 1.2; }
+
+.chart-title__info {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.15rem; height: 1.15rem; border-radius: 999px;
+  font-size: .8rem; cursor: help; user-select: none; position: relative;
+  color: #495057; background: #e9ecef;
+}
+.chart-title__info:focus { outline: 2px solid #adb5bd; border-radius: 999px; }
+
+.chart-title__tooltip {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  display: block; box-sizing: border-box;
+  min-width: 220px; max-width: 420px; white-space: normal; z-index: 1000;
+  background: #343a40; color: #fff;
+  padding: .6rem .7rem; border-radius: .6rem;
+  font-size: .85rem; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25); pointer-events: none;
+  opacity: 0; visibility: hidden;
+  transition: opacity .12s ease, visibility .12s ease, transform .12s ease;
+}
+.chart-title__info:hover .chart-title__tooltip,
+.chart-title__info:focus .chart-title__tooltip {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-2px);
+}
+.chart-title__tooltip::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 7px solid transparent; border-top-color: #343a40;
+}
+
+/* ===== Consistent chart container (optional helper) ===== */
+.chart-container { width: 100%; height: 350px; }
+
+/* ===== KPI cards ===== */
+.kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px; text-align: center;
+}
+.kpis .k { font-size: 13px; color: #090b0f; }
+.kpis .v { font-size: 20px; font-weight: 700; color: #111827; }
+
+/* ===== Table (bright and readable) ===== */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table.report {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 12px 0;
+  font-size: 14px;
+  background: #fff;
+  color: #1a1a1a;
+}
+
+table.report th,
+table.report td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table.report th {
+  background: #f2f4f8;
+  color: #23364a;
+  font-weight: 700;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+table.report td { color: #2d2d2d; font-weight: 500; }
+table.report tbody tr:nth-child(even) { background: #fbfdff; color: #1f2937; }
+table.report tbody tr:hover { background: #e8f0ff; }
+
+/* ===== Buttons (unified) ===== */
+.btn {
+  background: #0d6efd; color: #fff; border: 1px solid transparent;
+  padding: .55rem .9rem; border-radius: .5rem; font-size: .92rem; font-weight: 700;
+  cursor: pointer; transition: background .15s ease, transform .02s ease, box-shadow .15s ease;
+}
+.btn:hover  { background: #0a58ca; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.toolbar { display: flex; justify-content: flex-end; margin: 12px 0; }
+footer  { margin-top: 20px; font-size: 13px; color: #6b7280; }
+
+/* ===== Pager ===== */
+.pager { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: .75rem 0 1rem; }
+.pager-info { font-size: .9rem; color: #6b7280; }
+.pager-controls { display: flex; align-items: center; gap: .5rem; }
+.pager-page { font-size: .9rem; color: #1f2937; }
+
+/* ===== Overlay / Message box ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.message-box {
+  background: #ffffff;
+  padding: 24px 28px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+  max-width: 440px;
+  width: calc(100% - 40px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.message-box p {
+  color: #1f2937;
+  font-size: 1rem;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.message-box button {
+  background:#0d6efd ;
+  color: #ffffff;
+  border: none;
+  margin: 0 6px;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
+}
+.message-box button:hover { background: blue; }
+.message-box button:active { transform: translateY(1px); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* =========================
+   Summary page additions
+   ========================= */
+/* .summary { } */
+.summary .kpis { margin-top: 8px; }
+
+.summary .card {
+  background: #176b8e;
+
+  border: 1px solid #e6edf3;
+  border-radius: 10px;
+  padding: 12px 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.03);
+}
+
+.summary .k { color: white; }  /* darker label */
+.summary .v { color: white; }  /* strong value */
