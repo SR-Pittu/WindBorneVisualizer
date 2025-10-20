@@ -3,6 +3,11 @@ import axios from "axios";
 
 const BASE = "/wb";
 
+function demoFallback() {
+  console.warn("API failure: Falling back to empty track data.");
+  return {}; 
+}
+
 
 const EARTH_R = 6371e3;
 const toRad = d => d * Math.PI / 180;
