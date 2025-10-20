@@ -1,10 +1,7 @@
 import axios from "axios";
 
 
-const DEV = "/wb";       
-const PROD = "https://a.windbornesystems.com/treasure";
-const isLocal = () => location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const BASE = isLocal() ? DEV : PROD;
+const BASE = "/wb";
 
 
 const EARTH_R = 6371e3;
