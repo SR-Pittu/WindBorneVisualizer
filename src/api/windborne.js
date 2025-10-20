@@ -9,6 +9,7 @@ function demoFallback() {
 }
 
 
+
 const EARTH_R = 6371e3;
 const toRad = d => d * Math.PI / 180;
 const haversine = (a, b) => {
@@ -38,26 +39,23 @@ async function fetchHour(i) {
     return null;
   }
 }
-
-// Greedy nearest-neighbor assignment with a distance cap.
-// If a point is farther than MAX_LINK from every existing track, start a new track.
 const MAX_LINK = 1200e3; 
 
 export async function fetchConstellation24h() {
   const hours = await Promise.all(Array.from({ length: 24 }, (_, i) => fetchHour(i)));
 
-  // find the most recent good hour (00.json ideally)
+
   const firstGood = hours.findIndex(Boolean);
   if (firstGood === -1) return demoFallback();
 
   const baseNow = Date.now() - firstGood * 3600_000;
 
-  // Active tracks keyed by id
+
   /** @type {Record<string, Array<{t:Date,lat:number,lon:number,alt:number|null}>>} */
   const byId = {};
   let nextId = 0;
 
-  // Keep a list of current track tails (last point) for matching
+  
   /** @type {Array<{id:string, lat:number, lon:number}>} */
   let tails = [];
 

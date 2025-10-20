@@ -1,5 +1,5 @@
 // useDashboardData.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react"; // ADDED useCallback
 import { fetchConstellation24h } from "../api/windborne";
 import { clusterLatestPoints } from "../derive/clusters";
 import { attachWeatherForClusters } from "../derive/enrichWeather";
@@ -11,7 +11,6 @@ const toNum = v => {
 };
 const avg = arr => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
 
-// helpers for angle math
 const norm360 = d => ((d % 360) + 360) % 360;
 const signedDelta = (aDeg, bDeg) => {
   let d = norm360(bDeg) - norm360(aDeg);
@@ -20,36 +19,54 @@ const signedDelta = (aDeg, bDeg) => {
   return d;
 };
 
+const REFRESH_INTERVAL_MS = 3600000; 
+
 export default function useDashboardData(k = 100) {
   const [allTracks, setAllTracks] = useState(null);
   const [clusters, setClusters] = useState([]);
   const [wxByCluster, setWxByCluster] = useState({});
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  
+  const fetchData = useCallback(async () => {
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const byId = await fetchConstellation24h();
-        if (cancelled) return;
-        setAllTracks(byId);
+    const safeSetState = (setter, value) => {
+      if (!cancelled) setter(value);
+    };
 
-        const cls = clusterLatestPoints(byId, k);
-        if (cancelled) return;
-        setClusters(cls);
+    setLoading(true);
+    try {
+      const byId = await fetchConstellation24h();
+      safeSetState(setAllTracks, byId);
 
-        const wx = await attachWeatherForClusters(cls);
-        if (cancelled) return;
-        setWxByCluster(wx);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+      const cls = clusterLatestPoints(byId, k);
+      safeSetState(setClusters, cls);
+
+      const wx = await attachWeatherForClusters(cls);
+      safeSetState(setWxByCluster, wx);
+      
+    } catch (error) {
+        console.error("Dashboard data fetch failed:", error);
+    } finally {
+      safeSetState(setLoading, false);
+    }
+    
     return () => { cancelled = true; };
   }, [k]);
 
-  // per-balloon speed & headings (no wind needed here)
+
+  useEffect(() => {
+    let cleanupAsync = fetchData(); 
+    const intervalId = setInterval(() => {
+        if (typeof cleanupAsync === 'function') cleanupAsync(); 
+        cleanupAsync = fetchData(); 
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+        clearInterval(intervalId);
+        if (typeof cleanupAsync === 'function') cleanupAsync();
+    };
+  }, [fetchData]); 
+
   const derived = useMemo(() => {
     if (!allTracks) return null;
     return deriveHeadingsSpeedAndTailwind(allTracks);
@@ -64,8 +81,6 @@ export default function useDashboardData(k = 100) {
     return clusters.map(c => {
       const wx = wxByCluster[c.id] || {};
       const members = c.memberIds || c.ids || c.members || [];
-
-      // compute tailwind Δ per member using cluster wind direction
       let avgTailDelta = null;
       const wFrom = toNum(wx.windFromDeg);
       if (members.length && wFrom != null) {
@@ -76,8 +91,6 @@ export default function useDashboardData(k = 100) {
           .map(hdg => Math.abs(signedDelta(hdg, wTo)));
         avgTailDelta = avg(deltas);
       }
-
-      // average speed across members if available
       const memberSpeeds = members
         .map(id => toNum(speedMap[id]))
         .filter(v => v != null);
