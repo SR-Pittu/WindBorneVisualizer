@@ -20,7 +20,6 @@ const haversine = (a, b) => {
   return 2 * EARTH_R * Math.asin(Math.sqrt(h));
 };
 
-// accept arrays or objects
 const isNum = x => Number.isFinite(x);
 const toPoint = (p) => {
   if (Array.isArray(p) && p.length >= 2) {
@@ -65,20 +64,16 @@ export async function fetchConstellation24h() {
 
     const t = new Date(baseNow - i * 3600_000);
 
-    // Normalize the hour’s points
     let pts = [];
     if (Array.isArray(payload)) {
-      // payload like [[lat,lon,alt], ...]  (what you pasted)
       pts = payload.map(toPoint).filter(Boolean);
     } else if (payload && typeof payload === "object") {
-      // fallback: object of { id: {position: ... } }
       for (const [k, v] of Object.entries(payload)) {
         const p = toPoint(v?.position ?? v?.pos ?? v?.location ?? v);
         if (p) pts.push({ ...p, _hintId: k });
       }
     }
 
-    // First hour with data: seed tracks directly
     if (tails.length === 0) {
       pts.forEach(p => {
         const id = `b${String(nextId++).padStart(3, "0")}`;
@@ -88,7 +83,6 @@ export async function fetchConstellation24h() {
       continue;
     }
 
-    // Build all candidate distances (track tail -> point)
     const candidates = [];
     for (let ti = 0; ti < tails.length; ti++) {
       for (let pi = 0; pi < pts.length; pi++) {
@@ -96,7 +90,6 @@ export async function fetchConstellation24h() {
         if (d <= MAX_LINK) candidates.push({ ti, pi, d });
       }
     }
-    // Sort by distance for greedy matching
     candidates.sort((a, b) => a.d - b.d);
 
     const takenT = new Set();
@@ -109,14 +102,12 @@ export async function fetchConstellation24h() {
       assignments.push(c);
     }
 
-    // Append matched points to existing tracks
     for (const { ti, pi } of assignments) {
       const tail = tails[ti];
       const p = pts[pi];
       byId[tail.id].push({ t, lat: p.lat, lon: p.lon, alt: p.alt ?? null });
     }
 
-    // Unmatched points start new tracks
     for (let pi = 0; pi < pts.length; pi++) {
       if (takenP.has(pi)) continue;
       const p = pts[pi];
@@ -125,18 +116,13 @@ export async function fetchConstellation24h() {
       tails.push({ id, lat: p.lat, lon: p.lon });
     }
 
-    // Update tails to the hour’s last positions
-    // (Set to each track’s last point to prepare for next hour)
     tails = tails.map(tl => {
       const last = byId[tl.id][byId[tl.id].length - 1];
       return { id: tl.id, lat: last.lat, lon: last.lon };
     });
   }
-
-  // Cleanup + sort
   for (const id of Object.keys(byId)) {
     byId[id].sort((a, b) => a.t - b.t);
-    // Optional: drop very short tracks (e.g., singletons)
     if (byId[id].length < 2) delete byId[id];
   }
 

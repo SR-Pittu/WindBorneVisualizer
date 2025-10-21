@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ExportButton from "./ExportButton.jsx";
+import ExportButton from "../components/ExportButton";
 import ChartTitle from "../components/ChartTitle";
 
 export default function ReportTable({ rows }) {
@@ -20,6 +20,7 @@ export default function ReportTable({ rows }) {
     { key: "lat", label: "Centroid Lat" },
     { key: "lon", label: "Centroid Lon" },
     { key: "altKm", label: "Centroid Alt (km)" },
+    { key: "speedKmh", label: "Avg Speed (km/h)" },
     { key: "levelHpa", label: "Level (hPa)" },
     { key: "windKmh", label: "Wind (km/h)" },
     { key: "windFromDeg", label: "Wind From (°)" },
@@ -41,11 +42,12 @@ export default function ReportTable({ rows }) {
             <col style={{ width: '12ch' }} />
             <col style={{ width: '12ch' }} />  
             <col style={{ width: '14ch' }} /> 
+            <col style={{ width: '14ch' }} />
             <col style={{ width: '12ch' }} />   
             <col style={{ width: '14ch' }} />  
             <col style={{ width: '14ch' }} />  
+            <col style={{ width: '12ch' }} />  
             <col style={{ width: '14ch' }} />  
-            <col style={{ width: '16ch' }} />  
           </colgroup>
           <thead>
             <tr>{cols.map((c) => <th key={c.key}>{c.label}</th>)}</tr>

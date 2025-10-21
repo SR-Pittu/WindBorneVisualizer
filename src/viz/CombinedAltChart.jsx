@@ -1,4 +1,3 @@
-// src/viz/CombinedAltChart.jsx
 import { useMemo } from "react";
 import {
   LineChart,
@@ -6,218 +5,203 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
+  Legend,
   CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
 import ChartTitle from "../components/ChartTitle";
 
-// Distinct palette for lines
-const PALETTE = [
-  "#2563eb", "#059669", "#dc2626", "#d97706", "#9333ea",
-  "#0ea5e9", "#16a34a", "#f43f5e", "#f59e0b", "#22c55e",
-];
-const minuteKey = (t) => {
-  const d = t instanceof Date ? new Date(t) : new Date(t);
-  d.setSeconds(0, 0);
-  return d.toISOString();
+const HOUR = 60 * 60 * 1000;
+const hourFloor = (ms) => {
+  const d = new Date(ms);
+  d.setMinutes(0, 0, 0);
+  return d.getTime();
 };
-const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+const hourCeil = (ms) => {
+  const base = hourFloor(ms);
+  return base === ms ? ms : base + HOUR;
+};
 
-function kMeans(points, k, iters = 12) {
-  const n = points.length;
-  if (!n) return { labels: [], centroids: [] };
-  k = Math.max(1, Math.min(k, n));
-
-  const step = n / k;
-  let centroids = Array.from({ length: k }, (_, i) => points[Math.floor(i * step)]);
-
-  let labels = new Array(n).fill(0);
-  for (let it = 0; it < iters; it++) {
-    // assign step
-    for (let i = 0; i < n; i++) {
-      const p = points[i];
-      let best = 0, bestD = Infinity;
-      for (let c = 0; c < k; c++) {
-        const q = centroids[c];
-        const d =
-          (p[0] - q[0]) * (p[0] - q[0]) +
-          (p[1] - q[1]) * (p[1] - q[1]) +
-          (p[2] - q[2]) * (p[2] - q[2]);
-        if (d < bestD) { bestD = d; best = c; }
-      }
-      labels[i] = best;
-    }
-    // update step
-    const sums = Array.from({ length: k }, () => [0, 0, 0, 0]); // lat,lon,alt,count
-    for (let i = 0; i < n; i++) {
-      const c = labels[i];
-      const p = points[i];
-      sums[c][0] += p[0];
-      sums[c][1] += p[1];
-      sums[c][2] += p[2];
-      sums[c][3] += 1;
-    }
-    for (let c = 0; c < k; c++) {
-      if (sums[c][3] > 0) {
-        centroids[c] = [
-          sums[c][0] / sums[c][3],
-          sums[c][1] / sums[c][3],
-          sums[c][2] / sums[c][3],
-        ];
-      }
-    }
-  }
-  return { labels, centroids };
-}
 export default function CombinedAltChart({
   tracks,
   k = 10,
-  maxIds = 2000,
   height = 360,
+  latestFeedTime,
+  title = "Altitude Trends by Cluster",
+  palette = null,
 }) {
-  const { data, seriesKeys, counts } = useMemo(() => {
-    if (!tracks || !Object.keys(tracks).length) {
-      return { data: [], seriesKeys: [], counts: [] };
-    }
 
-    // 1) Choose ids (cap for safety/perf)
-    const allIds = Object.keys(tracks);
-    const ids = allIds.slice(0, maxIds);
-
-    // 2) Build feature vectors from latest points
-    const features = [];
-    const idList = [];
-    for (const id of ids) {
-      const segs = tracks[id] || [];
-      if (!segs.length) continue;
-      const last = segs[segs.length - 1];
-      if (last?.lat == null || last?.lon == null || last?.alt == null) continue;
-      features.push([+last.lat, +last.lon, +last.alt]);
-      idList.push(id);
-    }
-    if (!features.length) {
-      return { data: [], seriesKeys: [], counts: [] };
-    }
-
-    // 3) Run k-means directly on ALL balloons’ latest points
-    const kEff = Math.max(1, Math.min(k, features.length));
-    const { labels } = kMeans(features, kEff);
-
-    // 4) Build cluster membership id lists
-    const members = Array.from({ length: kEff }, () => []);
-    labels.forEach((c, i) => { members[c].push(idList[i]); });
-
-    // 5) Precompute per-id minute-binned altitude series and a unified time axis
-    const perIdSeries = new Map(); 
-    const allTimes = new Set();
-    for (const id of idList) {
-      const segs = tracks[id] || [];
-      const m = new Map();
-      for (const p of segs) {
-        if (p?.t == null || p?.alt == null) continue;
-        const tk = minuteKey(p.t);
-        if (!m.has(tk)) m.set(tk, +p.alt);
-      }
-      if (m.size) {
-        perIdSeries.set(id, m);
-        for (const tk of m.keys()) allTimes.add(tk);
-      }
-    }
-    const timeKeys = Array.from(allTimes).sort();
-
-    // 6) Aggregate mean altitude per cluster at each time
-    const seriesKeys = members.map((_, i) => `C${i + 1}`);
-    const data = timeKeys.map((tk) => {
-      const timeTs = new Date(tk).getTime(); 
-      const row = { timeTs };
-      members.forEach((idsInCluster, ci) => {
-        const vals = [];
-        for (const id of idsInCluster) {
-          const m = perIdSeries.get(id);
-          if (!m) continue;
-          const v = m.get(tk);
-          if (Number.isFinite(v)) vals.push(v);
+  const latestSampleMs = useMemo(() => {
+    if (!tracks || typeof tracks !== "object") return null;
+    let maxMs = 0;
+    for (const arr of Object.values(tracks)) {
+      if (!Array.isArray(arr)) continue;
+      for (const row of arr) {
+        let t = NaN;
+        if (Array.isArray(row)) t = Date.parse(row[3]);
+        else if (row && typeof row === "object") {
+          t = Date.parse(row.t ?? row.ts ?? row.time ?? row.date ?? NaN);
         }
-        const avg = mean(vals);
-        if (avg != null) row[seriesKeys[ci]] = +avg;
-      });
-      return row;
+        if (Number.isFinite(t) && t > maxMs) maxMs = t;
+      }
+    }
+    return maxMs || null;
+  }, [tracks]);
+
+  const referenceEndMs = useMemo(() => {
+    const fromProp = latestFeedTime ? Date.parse(latestFeedTime) : NaN;
+    const picked = Number.isFinite(fromProp) ? fromProp : latestSampleMs;
+    return picked ? hourCeil(picked) : null;
+  }, [latestFeedTime, latestSampleMs]);
+
+  const series = useMemo(() => {
+    if (!tracks || typeof tracks !== "object") return [];
+
+    const rowsByTime = new Map();
+    for (const [id, arr] of Object.entries(tracks)) {
+      if (!Array.isArray(arr)) continue;
+      for (const row of arr) {
+        let t = NaN;
+        let altKm = NaN;
+
+        if (Array.isArray(row)) {
+          t = Date.parse(row[3]);
+          altKm = Number(row[2]);
+        } else if (row && typeof row === "object") {
+          t = Date.parse(row.t ?? row.ts ?? row.time ?? row.date ?? NaN);
+          if (Number.isFinite(Number(row.altKm))) altKm = Number(row.altKm);
+          else if (Number.isFinite(Number(row.alt_km))) altKm = Number(row.alt_km);
+          else if (Number.isFinite(Number(row.alt))) altKm = Number(row.alt);
+          else if (Number.isFinite(Number(row.altitude_m))) altKm = Number(row.altitude_m) / 1000;
+          else if (Number.isFinite(Number(row.alt_m))) altKm = Number(row.alt_m) / 1000;
+        }
+
+        if (!Number.isFinite(t) || !Number.isFinite(altKm)) continue;
+
+        if (!rowsByTime.has(t)) rowsByTime.set(t, { t });
+        rowsByTime.get(t)[id] = altKm;
+      }
+    }
+
+    return Array.from(rowsByTime.values()).sort((a, b) => a.t - b.t);
+  }, [tracks]);
+
+  const domain = useMemo(() => {
+    if (!series.length) return ["auto", "auto"];
+
+    const minT = series[0].t;
+    const maxT = series[series.length - 1].t;
+    const end = referenceEndMs && referenceEndMs > maxT ? referenceEndMs : maxT;
+    const start = end - 24 * HOUR;
+
+    return [Math.max(start, minT), end];
+  }, [series, referenceEndMs]);
+
+  const lineKeys = useMemo(() => {
+    const ids = Object.keys(tracks || {});
+    ids.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    return ids.slice(0, k);
+  }, [tracks, k]);
+  const defaultPalette = [
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#8c564b",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
+  ];
+
+  const paletteToUse = Array.isArray(palette) && palette.length ? palette : defaultPalette;
+
+  const colorForId = (id) => {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h << 5) - h + id.charCodeAt(i);
+    const idx = Math.abs(h) % paletteToUse.length;
+    return paletteToUse[idx];
+  };
+
+  const xTickFmt = (ts) =>
+    new Date(ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const tooltipLabelFmt = (ts) =>
+    new Date(ts).toLocaleString(undefined, {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-    const counts = members.map((m) => m.length);
-    return { data, seriesKeys, counts };
-  }, [tracks, k, maxIds]);
+  const hourlyTicks = useMemo(() => {
+    if (!domain || !Array.isArray(domain) || domain[0] === "auto") return [];
+    const [start, end] = domain;
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return [];
+    const ticks = [];
+    const startHour = hourCeil(start - HOUR); // ensure coverage
+    for (let t = startHour; t <= end; t += HOUR) ticks.push(t);
+    return ticks;
+  }, [domain]);
 
-  // Empty states
-  if (!tracks || !Object.keys(tracks).length) {
-    return (
-      <section className="panel">
-        <h2>Altitude Trends by Cluster</h2>
-        <p className="muted">No track data.</p>
-      </section>
-    );
-  }
-  if (!data.length) {
-    return (
-      <section className="panel">
-        <ChartTitle
-          title={`Altitude Trends by Cluster (k=${k})`}
-          detail="No time-aligned altitude data available to render."
-        />
-      </section>
-    );
-  }
+  const noData = !series.length || !lineKeys.length;
 
   return (
-    <section className="panel">
+    <div className="panel">
+
       <ChartTitle
         title={`Altitude Trends by Cluster (k=${k})`}
         detail="Displays the mean altitude over time for each cluster. Balloons are grouped into up to k clusters using their latest latitude, longitude, and altitude, then averaged per minute to reveal distinct flight layers and patterns."
       />
-      <p className="muted">
-        Clusters are computed only for this chart using all balloons’ latest positions.
-      </p>
-      <div style={{ width: "100%", height }}>
+      <div className="chart-container" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 16, right: 24, bottom: 32, left: 12 }}>
-            <CartesianGrid strokeOpacity={0.2} />
-            <XAxis
-              dataKey="timeTs"
-              type="number"
-              domain={["dataMin", "dataMax"]}
-              scale="time"
-              tickFormatter={(v) => new Date(v).toISOString().slice(11, 16)} // HH:MM UTC
-              tickMargin={8}
-            />
-            <YAxis
-              label={{ value: "Altitude (km)", angle: -90, position: "insideLeft" }}
-              tickMargin={8}
-            />
-            <Tooltip
-              labelFormatter={(v) =>
-                new Date(v).toISOString().replace("T", " ").slice(0, 16) + " UTC"
-              }
-            />
-            {seriesKeys.map((ck, i) => (
-              <Line
-                key={ck}
-                type="monotone"
-                dataKey={ck}
-                stroke={PALETTE[i % PALETTE.length]}
-                dot={false}
-                strokeWidth={2}
-                isAnimationActive={false}
-                connectNulls
+          {noData ? (
+            <LineChart data={[]} margin={{ top: 8, right: 24, left: 24, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis />
+              <YAxis />
+            </LineChart>
+          ) : (
+            <LineChart
+              data={series}
+              margin={{ top: 8, right: 24, left: 24, bottom: 8 }}
+              key={domain.join("-")}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="t"
+                type="number"
+                domain={domain}
+                ticks={hourlyTicks}
+                tickFormatter={xTickFmt}
+                tick={{ fontSize: 12 }}
+                axisLine={{ stroke: "#888" }}
+                tickLine={{ stroke: "#888" }}
               />
-            ))}
-          </LineChart>
+              <YAxis
+                label={{ value: "Altitude (km)", angle: -90, position: "insideLeft" }}
+                tick={{ fontSize: 12 }}
+                allowDecimals
+                axisLine={{ stroke: "#888" }}
+                tickLine={{ stroke: "#888" }}
+              />
+              <Tooltip labelFormatter={tooltipLabelFmt} />
+              <Legend />
+              {lineKeys.map((id) => (
+                <Line
+                  key={id}
+                  type="monotone"
+                  dataKey={id}
+                  dot={false}
+                  strokeWidth={2}
+                  stroke={colorForId(id)}
+                  isAnimationActive={false}
+                />
+              ))}
+            </LineChart>
+          )}
         </ResponsiveContainer>
       </div>
-      {counts?.length ? (
-        <small className="muted">
-          Clusters: {counts.map((n, i) => `C${i + 1}=${n}`).join(" · ")}
-        </small>
-      ) : null}
-    </section>
+    </div>
   );
 }
