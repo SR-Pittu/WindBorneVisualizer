@@ -57,6 +57,7 @@ export default function useDashboardData(k = 100) {
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 30_000);
     const onVis = () => setNowMs(Date.now());
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVis);
@@ -169,6 +170,14 @@ export default function useDashboardData(k = 100) {
       setRefreshing(false);
     }
   };
+
+  // --- Auto-refresh at top-of-hour using existing staleness detector ---
+  useEffect(() => {
+    if (isStale && !refreshing) {
+      // Force so it bypasses staleness guard; throttle still prevents rapid repeats
+      refresh({ force: true });
+    }
+  }, [isStale, refreshing]); // runs when we cross into the next hour due to nowMs tick
 
   useEffect(() => {
     setCache({
