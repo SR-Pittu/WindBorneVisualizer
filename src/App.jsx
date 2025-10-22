@@ -24,18 +24,32 @@ export default function App() {
     loadError,
     upstreamEmpty,
   } = useDashboardData(100);
-
-    useEffect(() => {
-    if (!loading && !refreshing && rows && rows.length > 0) {
-      const handleVisibility = () => {
-        if (document.visibilityState === "visible") {
-          window.location.reload();
+useEffect(() => {
+  if (!loading && !refreshing && rows && rows.length > 0) {
+    let interval;
+    const checkVersion = async () => {
+      try {
+        const res = await fetch("/version.json", { cache: "no-store" });
+        const data = await res.json();
+        const currentVersion = localStorage.getItem("APP_VERSION");
+        if (currentVersion && currentVersion !== data.version) {
+          console.log("New deployment detected — refreshing...");
+          window.location.reload(true);
+        } else {
+          localStorage.setItem("APP_VERSION", data.version);
         }
-      };
-      document.addEventListener("visibilitychange", handleVisibility);
-      return () => document.removeEventListener("visibilitychange", handleVisibility);
-    }
-  }, [loading, refreshing, rows]);
+      } catch (e) {
+        console.warn("Version check failed", e);
+      }
+    };
+
+    checkVersion(); 
+    interval = setInterval(checkVersion, 60000); 
+
+    return () => clearInterval(interval);
+  }
+}, [loading, refreshing, rows]);
+
 
   const showLoading = loading || refreshing;
 

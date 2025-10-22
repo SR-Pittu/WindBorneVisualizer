@@ -25,6 +25,20 @@ export default function useDashboardData(k = 100) {
   const lastManualRefreshHourRef = useRef(null);
 
   const [cache, setCache] = useStickyState(CACHE_KEY, null);
+  const [derived, setDerived] = useState(null);
+
+  useEffect(() => {
+    if (allTracks && Object.keys(allTracks).length > 0) {
+      const id = setTimeout(() => {
+        const result = deriveHeadingsSpeedAndTailwind(allTracks);
+        setDerived(result);
+      }, 250);
+      return () => clearTimeout(id);
+    } else {
+      setDerived(null);
+    }
+  }, [allTracks, refreshing, loading]);
+
 
   const runFetchPipeline = async () => {
     setLoadError(null);
@@ -91,7 +105,7 @@ export default function useDashboardData(k = 100) {
           setLoading(false);
           return true;
         }
-      } catch {}
+      } catch { }
       return false;
     };
 
@@ -171,13 +185,12 @@ export default function useDashboardData(k = 100) {
     }
   };
 
-  // --- Auto-refresh at top-of-hour using existing staleness detector ---
+
   useEffect(() => {
     if (isStale && !refreshing) {
-      // Force so it bypasses staleness guard; throttle still prevents rapid repeats
       refresh({ force: true });
     }
-  }, [isStale, refreshing]); // runs when we cross into the next hour due to nowMs tick
+  }, [isStale, refreshing]);
 
   useEffect(() => {
     setCache({
@@ -214,7 +227,7 @@ export default function useDashboardData(k = 100) {
             lastManualRefreshHour: lastManualRefreshHourRef.current ?? null,
           })
         );
-      } catch {}
+      } catch { }
     };
 
     const onFreeze = () => saveNow();
@@ -237,10 +250,10 @@ export default function useDashboardData(k = 100) {
     };
   }, [allTracks, clusters, wxByCluster, lastUpdated, upstreamEmpty, loadError]);
 
-  const derived = useMemo(() => {
-    if (!allTracks) return null;
-    return deriveHeadingsSpeedAndTailwind(allTracks);
-  }, [allTracks]);
+  // const derived = useMemo(() => {
+  //   if (!allTracks) return null;
+  //   return deriveHeadingsSpeedAndTailwind(allTracks);
+  // }, [allTracks]);
 
   const rows = useMemo(() => {
     if (!clusters?.length) return [];
@@ -303,7 +316,7 @@ export default function useDashboardData(k = 100) {
     wxByCluster,
     loading,
     refreshing,
-    refresh, 
+    refresh,
     lastUpdated,
     isStale,
     canRefresh,
