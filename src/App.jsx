@@ -1,6 +1,6 @@
 
 import "./index.css";
-import { useMemo } from "react";
+import { useMemo,useEffect } from "react";
 
 import Summary from "./viz/summary";
 import HistTailwind from "./viz/HistTailwind";
@@ -24,6 +24,18 @@ export default function App() {
     loadError,
     upstreamEmpty,
   } = useDashboardData(100);
+
+    useEffect(() => {
+    if (!loading && !refreshing && rows && rows.length > 0) {
+      const handleVisibility = () => {
+        if (document.visibilityState === "visible") {
+          window.location.reload();
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibility);
+      return () => document.removeEventListener("visibilitychange", handleVisibility);
+    }
+  }, [loading, refreshing, rows]);
 
   const showLoading = loading || refreshing;
 
