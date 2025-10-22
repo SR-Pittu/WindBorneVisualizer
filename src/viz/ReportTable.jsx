@@ -20,7 +20,7 @@ export default function ReportTable({ rows }) {
     { key: "lat", label: "Centroid Lat" },
     { key: "lon", label: "Centroid Lon" },
     { key: "altKm", label: "Centroid Alt (km)" },
-    { key: "speedKmh", label: "Avg Speed (km/h)" },
+    { key: "speedKmh", label: "Speed (km/h)" },
     { key: "levelHpa", label: "Level (hPa)" },
     { key: "windKmh", label: "Wind (km/h)" },
     { key: "windFromDeg", label: "Wind From (°)" },

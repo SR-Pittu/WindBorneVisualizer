@@ -32,8 +32,18 @@ const toPoint = (p) => {
 
 async function fetchHour(i) {
   try {
-    const { data } = await axios.get(`${BASE}/${String(i).padStart(2,"0")}.json`, { timeout: 8000 });
-    return data;
+    const url = `${BASE}/${String(i).padStart(2, "0")}.json`;
+    const resp = await axios.get(url, {
+      timeout: 8000,
+      params: { _ts: Date.now() }, 
+      headers: {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+      },
+      validateStatus: s => (s >= 200 && s < 300) || s === 304,
+    });
+    if (resp.status === 304 || resp.data == null || resp.data === "") return null;
+    return resp.data;
   } catch {
     return null;
   }

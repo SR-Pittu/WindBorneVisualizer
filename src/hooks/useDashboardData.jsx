@@ -37,9 +37,6 @@ export default function useDashboardData(k = 100) {
       Object.values(byId).some((v) => Array.isArray(v) && v.length);
 
     if (!hasAny) {
-      setAllTracks(null);
-      setClusters([]);
-      setWxByCluster({});
       setUpstreamEmpty(true);
       setLastUpdated(new Date().toISOString());
       return;
@@ -60,7 +57,6 @@ export default function useDashboardData(k = 100) {
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 30_000);
     const onVis = () => setNowMs(Date.now());
-    document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVis);

@@ -12,3 +12,9 @@
   from = "/*"
   to   = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/wb/*"
+  [headers.values]
+  Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+  Pragma = "no-cache"

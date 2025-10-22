@@ -1,10 +1,5 @@
-// weatherClient.js
 import axios from "axios";
 
-/**
- * Snap approximate flight altitude (km) to a common pressure level (hPa).
- * Values roughly follow GFS typical geopotential heights.
- */
 export function altKmToNearestHpa(altKm) {
   const table = [
     { h: 300, km: 9.2 },  { h: 250, km: 10.4 }, { h: 200, km: 11.8 },
@@ -92,8 +87,7 @@ async function fetchSingleForecast({ lat, lon, levelHpa }) {
       "temperature_2m",
     ].join(","),
     timezone: "UTC",
-    // Optional: pick a model that supports pressure levels
-    // models: "gfs_global",
+    
   });
 
   const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
@@ -102,7 +96,6 @@ async function fetchSingleForecast({ lat, lon, levelHpa }) {
   const t = data?.hourly?.time;
   if (!t || !t.length) return null;
 
-  // Use the last hour as "current-ish"
   const i = t.length - 1;
   const windKmh = data.hourly?.[`wind_speed_${levelHpa}hPa`]?.[i] ?? null;
   const windFromDeg = data.hourly?.[`wind_direction_${levelHpa}hPa`]?.[i] ?? null;
@@ -137,14 +130,12 @@ export async function fetchWeatherForClusters(clusters) {
   // Work function with retry
   const worker = async (r) => withRetry(
     () => fetchSingleForecast({ lat: r.lat, lon: r.lon, levelHpa: r.levelHpa }),
-    /* attempts */ 3,
-    /* base backoff ms */ 700
+     3,
+     700
   );
 
-  // Limit concurrency to 4 to be gentle on the API
   const results = await runWithConcurrency(reqs, 4, worker);
 
-  // Assemble output keyed by clusterId
   /** @type {Record<string|number, any>} */
   const byId = {};
   results.forEach((wx, i) => {
