@@ -38,7 +38,7 @@ export default function App() {
         sessionStorage.setItem("APP_HARD_REFRESH_DONE", "true");
         setTimeout(() => {
           window.location.reload(true);
-        }, 1500); 
+        }, 15); 
       }
     }
   }, [loading, refreshing, rows]);
