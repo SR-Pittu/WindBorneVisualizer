@@ -1,6 +1,6 @@
 
 import "./index.css";
-import { useMemo } from "react";
+import { useMemo, useEffect} from "react";
 
 import Summary from "./viz/summary";
 import HistTailwind from "./viz/HistTailwind";
