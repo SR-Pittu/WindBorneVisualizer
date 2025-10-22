@@ -50,7 +50,15 @@ export async function fetchConstellation24h() {
   const firstGood = hours.findIndex(Boolean);
   if (firstGood === -1) return demoFallback();
 
-  const baseNow = Date.now() - firstGood * 3600_000;
+  const now = Date.now();
+  const topOfCurrentHourMs = (() => {
+    const d = new Date(now);
+    d.setMinutes(0, 0, 0);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    return d.getTime();
+  })();
+
   const byId = {};
   let nextId = 0;
   let tails = [];
@@ -58,7 +66,7 @@ export async function fetchConstellation24h() {
   for (let i = firstGood; i < 24; i++) {
     const payload = hours[i];
     if (!payload) continue;
-    const t = new Date(baseNow - i * 3600_000);
+    const t = new Date(topOfCurrentHourMs - i * 3600_000);
 
     let pts = [];
     if (Array.isArray(payload)) {
@@ -150,6 +158,14 @@ export async function fetchConstellation24h() {
       }
     }
   } catch {}
+
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        window.location.reload();
+      }
+    });
+  }
 
   return byId;
 }
