@@ -25,30 +25,16 @@ export default function App() {
     upstreamEmpty,
   } = useDashboardData(100);
 useEffect(() => {
-  if (!loading && !refreshing && rows && rows.length > 0) {
-    let interval;
-    const checkVersion = async () => {
-      try {
-        const res = await fetch("/version.json", { cache: "no-store" });
-        const data = await res.json();
-        const currentVersion = localStorage.getItem("APP_VERSION");
-        if (currentVersion && currentVersion !== data.version) {
-          console.log("New deployment detected — refreshing...");
+    if (!loading && !refreshing && rows && rows.length > 0) {
+      const alreadyReloaded = sessionStorage.getItem("APP_HARD_REFRESH_DONE");
+      if (!alreadyReloaded) {
+        sessionStorage.setItem("APP_HARD_REFRESH_DONE", "true");
+        setTimeout(() => {
           window.location.reload(true);
-        } else {
-          localStorage.setItem("APP_VERSION", data.version);
-        }
-      } catch (e) {
-        console.warn("Version check failed", e);
+        }, 1500); 
       }
-    };
-
-    checkVersion(); 
-    interval = setInterval(checkVersion, 60000); 
-
-    return () => clearInterval(interval);
-  }
-}, [loading, refreshing, rows]);
+    }
+  }, [loading, refreshing, rows]);
 
 
   const showLoading = loading || refreshing;
@@ -94,6 +80,7 @@ useEffect(() => {
       </div>
     );
   }
+  
 
   return (
     <div className="container">
@@ -155,5 +142,6 @@ useEffect(() => {
         <small>Data: WindBorne Systems &amp; Open-Meteo | Visualization © 2025</small>
       </footer>
     </div>
+    
   );
 }
