@@ -1,6 +1,6 @@
 
 import "./index.css";
-import { useMemo,useEffect } from "react";
+import { useMemo } from "react";
 
 import Summary from "./viz/summary";
 import HistTailwind from "./viz/HistTailwind";
@@ -24,8 +24,15 @@ export default function App() {
     loadError,
     upstreamEmpty,
   } = useDashboardData(100);
-useEffect(() => {
-    if (!loading && !refreshing && rows && rows.length > 0) {
+
+    useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      !loading &&
+      !refreshing &&
+      rows &&
+      rows.length > 0
+    ) {
       const alreadyReloaded = sessionStorage.getItem("APP_HARD_REFRESH_DONE");
       if (!alreadyReloaded) {
         sessionStorage.setItem("APP_HARD_REFRESH_DONE", "true");
@@ -35,7 +42,6 @@ useEffect(() => {
       }
     }
   }, [loading, refreshing, rows]);
-
 
   const showLoading = loading || refreshing;
 
@@ -80,7 +86,6 @@ useEffect(() => {
       </div>
     );
   }
-  
 
   return (
     <div className="container">
@@ -142,6 +147,5 @@ useEffect(() => {
         <small>Data: WindBorne Systems &amp; Open-Meteo | Visualization © 2025</small>
       </footer>
     </div>
-    
   );
 }
